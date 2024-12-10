@@ -35,3 +35,108 @@ print(y_train.value_counts())
 
 print("After SMOTE class distribution:")
 print(y_resampled.value_counts())
+
+
+# Worked done by umer
+# Random Forest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report, accuracy_score
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+rf = RandomForestClassifier(random_state=42)
+
+param_grid_rf = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [None, 10, 20, 30],
+    'max_features': ['sqrt', 'log2'],
+    'min_samples_split': [2, 5, 10]
+}
+
+grid_rf = GridSearchCV(estimator=rf, param_grid=param_grid_rf, cv=5, n_jobs=-1, verbose=2)
+grid_rf.fit(X_resampled_pca, y_resampled)
+
+best_rf = grid_rf.best_estimator_
+y_pred_rf = best_rf.predict(X_test_pca)
+print("Best Parameters (GridSearchCV):", grid_rf.best_params_)
+print("Random Forest Accuracy (GridSearchCV):", accuracy_score(y_test, y_pred_rf))
+print("Classification Report:\n", classification_report(y_test, y_pred_rf))
+
+conf_matrix = confusion_matrix(y_test, y_pred_rf)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=best_rf.classes_, yticklabels=best_rf.classes_)
+plt.title("Confusion Matrix (Random Forest)")
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.show()
+
+
+from sklearn.model_selection import RandomizedSearchCV
+
+param_dist_rf = {
+    'n_estimators': [50, 100, 200, 300],
+    'max_depth': [None, 10, 20, 30],
+    'max_features': ['sqrt', 'log2'],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+random_rf = RandomizedSearchCV(estimator=rf, param_distributions=param_dist_rf, n_iter=50, cv=5, 
+                               n_jobs=-1, verbose=2, random_state=42)
+random_rf.fit(X_resampled_pca, y_resampled)
+
+best_rf_random = random_rf.best_estimator_
+y_pred_rf_random = best_rf_random.predict(X_test_pca)
+print("Best Parameters (RandomizedSearchCV):", random_rf.best_params_)
+print("Random Forest Accuracy (RandomizedSearchCV):", accuracy_score(y_test, y_pred_rf_random))
+print("Classification Report:\n", classification_report(y_test, y_pred_rf_random))
+
+
+# SVM
+from sklearn.svm import SVC
+
+svm = SVC(random_state=42)
+
+param_grid_svm = {
+    'C': [0.1, 1, 10],
+    'kernel': ['linear', 'rbf', 'poly'],
+    'gamma': ['scale', 'auto']
+}
+
+grid_svm = GridSearchCV(estimator=svm, param_grid=param_grid_svm, cv=5, n_jobs=-1, verbose=2)
+grid_svm.fit(X_resampled_pca, y_resampled)
+
+best_svm = grid_svm.best_estimator_
+y_pred_svm = best_svm.predict(X_test_pca)
+print("Best Parameters (GridSearchCV):", grid_svm.best_params_)
+print("SVM Accuracy (GridSearchCV):", accuracy_score(y_test, y_pred_svm))
+print("Classification Report:\n", classification_report(y_test, y_pred_svm))
+
+conf_matrix = confusion_matrix(y_test, y_pred_svm)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=best_rf.classes_, yticklabels=best_rf.classes_)
+plt.title("Confusion Matrix (SVM )")
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.show()
+
+
+param_dist_svm = {
+    'C': [0.1, 1, 10, 100],
+    'kernel': ['linear', 'rbf', 'poly'],
+    'gamma': ['scale', 'auto', 0.01, 0.1, 1]
+}
+
+random_svm = RandomizedSearchCV(estimator=svm, param_distributions=param_dist_svm, n_iter=20, cv=5,
+                                n_jobs=-1, verbose=2, random_state=42)
+random_svm.fit(X_resampled_pca, y_resampled)
+
+best_svm_random = random_svm.best_estimator_
+y_pred_svm_random = best_svm_random.predict(X_test_pca)
+print("Best Parameters (RandomizedSearchCV):", random_svm.best_params_)
+print("SVM Accuracy (RandomizedSearchCV):", accuracy_score(y_test, y_pred_svm_random))
+print("Classification Report:\n", classification_report(y_test, y_pred_svm_random))
