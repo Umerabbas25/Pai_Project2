@@ -140,3 +140,118 @@ y_pred_svm_random = best_svm_random.predict(X_test_pca)
 print("Best Parameters (RandomizedSearchCV):", random_svm.best_params_)
 print("SVM Accuracy (RandomizedSearchCV):", accuracy_score(y_test, y_pred_svm_random))
 print("Classification Report:\n", classification_report(y_test, y_pred_svm_random))
+
+# work done by zaimal
+from xgboost import XGBClassifier
+
+xgb = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='mlogloss')
+
+param_grid_xgb = {
+    'n_estimators': [50, 100, 200],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'max_depth': [3, 6, 9],
+    'subsample': [0.8, 1.0]
+}
+
+grid_xgb = GridSearchCV(estimator=xgb, param_grid=param_grid_xgb, cv=5, n_jobs=-1, verbose=2)
+grid_xgb.fit(X_resampled_pca, y_resampled)
+
+best_xgb = grid_xgb.best_estimator_
+y_pred_xgb = best_xgb.predict(X_test_pca)
+print("Best Parameters (GridSearchCV):", grid_xgb.best_params_)
+print("XGBoost Accuracy (GridSearchCV):", accuracy_score(y_test, y_pred_xgb))
+print("Classification Report:\n", classification_report(y_test, y_pred_xgb))
+
+conf_matrix = confusion_matrix(y_test, y_pred_xgb)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=best_rf.classes_, yticklabels=best_rf.classes_)
+plt.title("Confusion Matrix ( Xgb)")
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.show()
+
+param_dist_xgb = {
+    'n_estimators': [50, 100, 200, 300],
+    'learning_rate': [0.01, 0.05, 0.1, 0.2],
+    'max_depth': [3, 6, 9],
+    'subsample': [0.7, 0.8, 1.0]
+}
+
+random_xgb = RandomizedSearchCV(estimator=xgb, param_distributions=param_dist_xgb, n_iter=50, cv=5,
+                                n_jobs=-1, verbose=2, random_state=42)
+random_xgb.fit(X_resampled_pca, y_resampled)
+
+best_xgb_random = random_xgb.best_estimator_
+y_pred_xgb_random = best_xgb_random.predict(X_test_pca)
+print("Best Parameters (RandomizedSearchCV):", random_xgb.best_params_)
+print("XGBoost Accuracy (RandomizedSearchCV):", accuracy_score(y_test, y_pred_xgb_random))
+print("Classification Report:\n", classification_report(y_test, y_pred_xgb_random))
+
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = KNeighborsClassifier()
+
+param_grid_knn = {
+    'n_neighbors': [3, 5, 7, 11],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan', 'minkowski']
+}
+
+
+grid_knn = GridSearchCV(estimator=knn, param_grid=param_grid_knn, cv=5, n_jobs=-1, verbose=2)
+grid_knn.fit(X_resampled_pca, y_resampled)
+
+best_knn = grid_knn.best_estimator_
+y_pred_knn = best_knn.predict(X_test_pca)
+print("Best Parameters (GridSearchCV):", grid_knn.best_params_)
+print("KNN Accuracy (GridSearchCV):", accuracy_score(y_test, y_pred_knn))
+print("Classification Report:\n", classification_report(y_test, y_pred_knn))
+
+conf_matrix = confusion_matrix(y_test, y_pred_knn)
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=best_rf.classes_, yticklabels=best_rf.classes_)
+plt.title("Confusion Matrix ( KNN)")
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.show()
+
+
+param_dist_knn = {
+    'n_neighbors': [3, 5, 7, 11, 15],
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan', 'minkowski']
+}
+
+random_knn = RandomizedSearchCV(estimator=knn, param_distributions=param_dist_knn, n_iter=20, cv=5,
+                                n_jobs=-1, verbose=2, random_state=42)
+random_knn.fit(X_resampled_pca, y_resampled)
+
+best_knn_random = random_knn.best_estimator_
+y_pred_knn_random = best_knn_random.predict(X_test_pca)
+print("Best Parameters (RandomizedSearchCV):", random_knn.best_params_)
+print("KNN Accuracy (RandomizedSearchCV):", accuracy_score(y_test, y_pred_knn_random))
+print("Classification Report:\n", classification_report(y_test, y_pred_knn_random))
+
+# Models acuuracy plot
+import matplotlib.pyplot as plt
+model_names = ["Random Forest", "SVM", "XGBoost", "KNN"]
+
+accuracies = [
+    accuracy_score(y_test, y_pred_rf),
+    accuracy_score(y_test, y_pred_svm),
+    accuracy_score(y_test, y_pred_xgb),
+    accuracy_score(y_test, y_pred_knn)   
+]
+
+# Plotting the accuracies
+plt.figure(figsize=(8, 6))
+plt.bar(model_names, accuracies, color='lightblue')
+plt.xlabel('Model')
+plt.ylabel('Accuracy')
+plt.title('Accuracy Comparison Across Models')
+plt.xticks(rotation=45, ha='right')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.show()
